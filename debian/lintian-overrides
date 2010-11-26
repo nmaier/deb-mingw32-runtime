@@ -1,0 +1,3 @@
+mingw32-runtime: non-standard-dir-in-usr
+mingw32-runtime: file-in-unusual-dir
+mingw32-runtime: arch-independent-package-contains-binary-or-object

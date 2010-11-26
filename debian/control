@@ -1,0 +1,18 @@
+Source: mingw32-runtime
+Section: devel
+Priority: optional
+Build-Depends: debhelper (>=5.0)
+Build-Depends-Indep: mingw32-binutils, mingw32
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+XSBC-Original-Maintainer: Ron Lee <ron@debian.org>
+Standards-Version: 3.8.2
+
+Package: mingw32-runtime
+Architecture: all
+Recommends: mingw32
+Conflicts: mingw32 (<< 3.4.2.20040916.1-2)
+Replaces: mingw32 (<= 2.95.2-7)
+Description: Minimalist GNU win32 (cross) runtime
+ This package contains the target runtime files for a Linux hosted,
+ win32 target, C/C++ cross compiler.
+

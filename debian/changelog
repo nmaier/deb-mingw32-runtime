@@ -1,0 +1,199 @@
+mingw32-runtime (3.18-nm2) lucid; urgency=low
+
+  * Generate mingwex80 for msvcrt >= 0x0800 targets
+  * Generate mozcrt19 (mozilla's crt build using mingw)
+  * Fix crt defs for msvcrt >= 0x0800
+
+ -- Nils Maier <maierman@web.de>  Fri, 26 Nov 2010 10:42:54 +0100
+
+mingw32-runtime (3.18-nm1) lucid; urgency=low
+
+  * New upstream
+
+ -- Nils Maier <maierman@web.de>  Tue, 27 Apr 2010 23:07:26 +0200
+
+mingw32-runtime (3.15.2-0ubuntu1) karmic; urgency=low
+
+  * new upstream release. (LP: #306542)
+  * debian/control: bumped standard-version to 3.8.2, 
+  * set debhelper compat version to 5, and debhelper b-dep to 5.0
+
+ -- Andrea Gasparini <gaspa@yattaweb.it>  Fri, 26 Jun 2009 09:58:48 +0200
+
+mingw32-runtime (3.13-1) unstable; urgency=low
+
+  * runtime-3.13 / w32api-3.10  Closes: #442793
+
+ -- Ron Lee <ron@debian.org>  Sat, 22 Sep 2007 22:12:42 +0930
+
+mingw32-runtime (3.12-1) unstable; urgency=low
+
+  * runtime-3.12 / w32api-3.9  Closes: #400540
+  * Drop local patches merged upstream.
+
+ -- Ron Lee <ron@debian.org>  Sat, 26 May 2007 15:21:15 +0930
+
+mingw32-runtime (3.9-4) unstable; urgency=low
+
+  * Typo fix for the IN/OUT patch, add backward compatible
+    defines that may be disabled optionally.  Closes: #353093
+
+ -- Ron Lee <ron@debian.org>  Fri, 24 Feb 2006 18:19:11 +1030
+
+mingw32-runtime (3.9-3) unstable; urgency=low
+
+  * Patch IN, OUT and OPTIONAL 'documentation' macros to prefix
+    them with __W32_ and get them out of the global namespace.
+  * The previous patch has been accepted upstream, and this one
+    has preliminary approval -- please report any teething
+    problems to me, at this stage I can find none I've missed,
+    or any I've changed wrongly, but its a big hunt for common
+    symbols, so there could be a few.  Thanks for your patience
+    and testing!
+
+ -- Ron Lee <ron@debian.org>  Mon,  6 Feb 2006 16:30:53 +1030
+
+mingw32-runtime (3.9-2) unstable; urgency=low
+
+  * Patch winnls.h to remove bogus semicolons which break
+    #define'd generic names when WINVER >= 0x0500.
+
+ -- Ron Lee <ron@debian.org>  Sun,  5 Feb 2006 02:22:55 +1030
+
+mingw32-runtime (3.9-1) unstable; urgency=low
+
+  * runtime-3.9 / w32api-3.6
+  * Repacked the pristine runtime tarball without dos line endings.
+
+ -- Ron Lee <ron@debian.org>  Sun, 29 Jan 2006 18:11:04 +1030
+
+mingw32-runtime (3.8-1) unstable; urgency=low
+
+  * runtime-3.8 / w32api-3.3
+  * Fixes location of IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS,
+    Closes: #281049
+  * Fixes stat.h guards, Closes: #281162.
+
+ -- Ron Lee <ron@debian.org>  Fri,  7 Oct 2005 12:03:12 +0930
+
+mingw32-runtime (3.7-1) unstable; urgency=low
+
+  * runtime-3.7 / w32api-3.2
+  * Does not close #281049 or #281162 at this stage, sorry.
+  * Declare a conflict with prior compilers, as the switch
+    to sjlj-exceptions is not binary compatible.
+
+ -- Ron Lee <ron@debian.org>  Mon,  7 Feb 2005 14:49:10 +1030
+
+mingw32-runtime (3.5-1) unstable; urgency=low
+
+  * runtime-3.5 / w32api-3.1
+  * Patch from 3.3-2 now incorporated upstream.
+
+ -- Ron Lee <ron@debian.org>  Wed, 10 Nov 2004 17:03:02 +1030
+
+mingw32-runtime (3.3-2) unstable; urgency=high
+
+  * Added patch for a typo pointed out by Fabian Wenzel which
+    prevents apps that use ocidl.h from compiling.
+    No other changes, this update should progress to testing asap.
+
+ -- Ron Lee <ron@debian.org>  Thu, 19 Aug 2004 04:55:54 +0930
+
+mingw32-runtime (3.3-1) unstable; urgency=low
+
+  * runtime-3.3 / w32api-2.5.
+  * mingw 3.3.3 and 3.4.1 both seem flakey, but the new runtime has many
+    fixes worth incorporating before the freeze, so this is a runtime
+    update for the existing 3.3.1 compiler release.
+
+ -- Ron Lee <ron@debian.org>  Tue,  3 Aug 2004 16:04:31 +0930
+
+mingw32-runtime (3.2-1) unstable; urgency=low
+
+  * runtime-3.2 / w32api-2.4.  Closes: #192179, #187431
+  * includes vfw.h  Closes: #166491
+
+ -- Ron Lee <ron@debian.org>  Sun, 26 Oct 2003 17:38:51 +1030
+
+mingw32-runtime (2.3-1) unstable; urgency=low
+
+  * runtime-2.3 / w32api-2.1.
+  * Includes GL and ddk support.
+  * Includes SHGFI_ATTR_SPECIFIED.  Closes: #140534
+  * Made package arch all to kickstart buildd for the binutils/gcc packages.
+
+ -- Ron Lee <ron@debian.org>  Thu, 23 Jan 2003 21:33:30 -0800
+
+mingw32-runtime (2.2-1) unstable; urgency=low
+
+  * runtime-2.2 / w32api-2.0 release.  Closes: #141485 too.
+  * Built with gcc3.2, expecially since builds of 2.95 appear 
+    to have gone (and remained) down the toilet.  It appears
+    to work fine with 2.95, but none of the recent 2.95
+    releases actually build anymore.
+
+ -- Ron Lee <ron@debian.org>  Wed,  9 Oct 2002 19:41:05 -0700
+
+mingw32-runtime (2.1-2) unstable; urgency=low
+
+  * Rebuilt for gcc3.2
+
+ -- Ron Lee <ron@debian.org>  Sat, 24 Aug 2002 12:23:33 -0700
+
+mingw32-runtime (2.1-1) unstable; urgency=low
+
+  * runtime-2.1 / w32api-1.5 release.
+  * Patch forwarded (and applied) upstream.  Closes: #140534
+  * Patch from #141485 not yet applied upstream, status currently unknown.
+
+ -- Ron Lee <ron@debian.org>  Thu, 22 Aug 2002 13:35:40 -0700
+
+mingw32-runtime (2.0-1) unstable; urgency=low
+
+  * runtime-2.0 / w32api-1.5 release.
+
+ -- Ron Lee <ron@debian.org>  Mon, 15 Jul 2002 19:53:18 -0700
+
+mingw32-runtime (1.2-1) unstable; urgency=medium
+
+  * New upstream runtime and w32api release.
+
+ -- Ron Lee <ron@debian.org>  Fri,  7 Dec 2001 15:09:54 -0800
+
+mingw32-runtime (1.1-2) unstable; urgency=low
+
+  * Rebuilt with gcc-2.95.3-7
+
+ -- Ron Lee <ron@debian.org>  Tue, 13 Nov 2001 18:46:35 -0800
+
+mingw32-runtime (1.1-1) unstable; urgency=low
+
+  * New upstream mingw-runtime.
+
+ -- Ron Lee <ron@debian.org>  Mon, 17 Sep 2001 09:51:44 -0700
+
+mingw32-runtime (1.0.1.20010915-1) unstable; urgency=low
+
+  * New upstream w32api.
+
+ -- Ron Lee <ron@debian.org>  Sun, 16 Sep 2001 23:23:53 -0700
+
+mingw32-runtime (1.0.1-2) unstable; urgency=low
+
+  * rebuild with gcc-2.95.3-6 after a change to the
+    struct offset.
+
+ -- Ron Lee <ron@debian.org>  Tue, 28 Aug 2001 15:43:52 -0700
+
+mingw32-runtime (1.0.1-1) unstable; urgency=low
+
+  * split runtime out from toolchain package to accommodate
+    new upstream packaging and later hopes of merging with
+    'mainstream' gcc/binutils.
+
+ -- Ron Lee <ron@debian.org>  Fri, 10 Aug 2001 11:41:57 -0700
+
+Local variables:
+mode: debian-changelog
+End:

@@ -1,0 +1,176 @@
+#!/usr/bin/make -f
+#
+# debian/rules file to build the Mingw32 runtime package.
+#
+# Created 21 Aug 2001, by Ron Lee <ron@debian.org>
+
+#export DH_VERBOSE=1
+
+package = mingw32-runtime
+target  = i586-mingw32msvc
+
+top_dir      := $(shell pwd)
+upstream_dir := $(top_dir)/upstream
+patch_dir    := $(top_dir)/debian/patches
+build_dir    := $(top_dir)/build_dir
+build_src    := $(build_dir)/src
+build_objs   := $(build_dir)/objs
+
+PACKAGE_BASENAME = $(patsubst %-src.tar,%,$(basename $(notdir $(wildcard $(upstream_dir)/$(1)*))))
+
+mingw_runtime := $(call PACKAGE_BASENAME,mingwrt)
+win32api      := $(call PACKAGE_BASENAME,w32api)
+
+ifneq ($(words $(mingw_runtime)),1)
+  $(error mingw_runtime defined as '$(mingw_runtime)')
+endif
+
+ifneq ($(words $(win32api)),1)
+  $(error win32api defined as '$(win32api)')
+endif
+
+build : build-win32api-stamp build-mingw-stamp
+
+configure-win32api-stamp : unpack-stamp
+	dh_testdir
+	mkdir -p $(build_objs)/$(win32api)
+
+	cd $(build_objs)/$(win32api) 							\
+		&& $(build_src)/$(win32api)/configure -v				\
+			--prefix=/usr      						\
+			--host=$(target)   						\
+			--target=$(target) 						\
+			--build=`$(build_src)/$(win32api)/config.guess` 		\
+			--includedir=$(top_dir)/debian/$(package)/usr/$(target)/include	\
+			--libdir=$(top_dir)/debian/$(package)/usr/$(target)/lib
+	touch $@
+
+build-win32api-stamp : configure-win32api-stamp
+	dh_testdir
+	cd $(build_objs)/$(win32api) && $(MAKE)
+
+	touch $@
+
+configure-mingw-stamp : unpack-stamp
+	dh_testdir
+	mkdir -p $(build_objs)/$(mingw_runtime)
+
+	cd $(build_objs)/$(mingw_runtime) 						\
+		&& $(build_src)/$(mingw_runtime)/configure -v				\
+			--prefix=/usr     						\
+			--host=$(target)   						\
+			--target=$(target) 						\
+			--build=`$(build_src)/$(win32api)/config.guess` 		\
+			--includedir=$(top_dir)/debian/$(package)/usr/$(target)/include	\
+			--libdir=$(top_dir)/debian/$(package)/usr/$(target)/lib
+	touch $@
+
+build-mingw-stamp : configure-mingw-stamp
+	dh_testdir
+	cd $(build_objs)/$(mingw_runtime) && $(MAKE)
+
+	touch $@
+
+
+install : preinstall-stamp install-win32api-stamp install-mingw-stamp
+	# remove mingwm10.dll from bin, it's billware runtime only
+	# so we install it in DOCDIR instead.
+	$(RM) -r $(top_dir)/debian/$(package)/usr/bin
+
+	# w32api2.5 installs some things in /usr/doc.
+	# Remove that dir for FHS complience, anything valuable should already be
+	# installed in /usr/share/doc by the time we get here.
+	$(RM) -r $(top_dir)/debian/$(package)/usr/doc
+
+	# remove some non-cross stuff that will clash with other packages
+	$(RM) -r debian/$(package)/usr/share/man
+
+
+install-win32api-stamp : build-win32api-stamp preinstall-stamp
+	dh_testdir
+	dh_testroot
+	cd $(build_objs)/$(win32api)							\
+		&& $(MAKE) install prefix=$(top_dir)/debian/$(package)/usr		\
+				   mandir=$(top_dir)/debian/$(package)/usr/share/man
+	touch $@
+
+install-mingw-stamp : build-mingw-stamp preinstall-stamp
+	dh_testdir
+	dh_testroot
+	cd $(build_objs)/$(mingw_runtime) 						\
+		&& $(MAKE) install prefix=$(top_dir)/debian/$(package)/usr 		\
+				   mandir=$(top_dir)/debian/$(package)/usr/share/man
+	touch $@
+
+
+preinstall-stamp: 
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+
+	dh_installdirs usr/share/lintian/overrides
+	# install override for the non fhs target dir gcc wants to use
+	# (until we find a better solution or change policy)
+	cp debian/lintian-overrides debian/$(package)/usr/share/lintian/overrides/$(package)
+
+	touch $@
+
+
+unpack-stamp:
+	dh_testdir
+	mkdir -p $(build_src)
+
+	# unpack upstream tarballs
+	@cd $(build_src) 							\
+		&& for f in $(mingw_runtime) $(win32api); do			\
+			echo "unpacking $$f";					\
+			if [ -r $(upstream_dir)/$$f-src.tar.gz ]; then		\
+				tar zxf $(upstream_dir)/$$f-src.tar.gz;		\
+			elif [ -r $(upstream_dir)/$$f-src.tar.bz2 ]; then	\
+				tar jxf $(upstream_dir)/$$f-src.tar.bz2;	\
+			else							\
+				echo " *** Error: Failed to unpack $$f";	\
+				exit 1;						\
+			fi;							\
+		done;
+
+	# fix bogus mingw package & dir names
+#	mv $(build_src)/mingw-runtime* $(build_src)/$(mingw_runtime)
+#	mv $(build_src)/w32api* $(build_src)/$(win32api)
+	ln -s $(win32api) $(build_src)/w32api
+
+	# apply any patches
+	@cd $(build_src) &&							\
+		for p in $(wildcard $(patch_dir)/*.patch); do			\
+			patch -p0 < $$p;					\
+		done
+
+	touch $@
+
+
+clean::
+	dh_testdir
+	dh_testroot
+	rm -rf $(build_dir) *-stamp
+	dh_clean
+
+
+binary-indep:
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installdocs $(build_objs)/$(mingw_runtime)/mingwm10.dll
+	dh_installchangelogs
+	dh_strip -Xusr/$(target)/lib
+	$(target)-strip --strip-debug 	debian/$(package)/usr/$(target)/lib/*.a
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+
+.PHONY: binary-indep binary-arch binary clean build install
+

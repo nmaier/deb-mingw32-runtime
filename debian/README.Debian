@@ -1,0 +1,7 @@
+
+The mingwm10.dll file here is required at runtime.  You'll need to
+copy it to wherever your favorite billware runtime dll's are found.
+
+  Ron
+
+

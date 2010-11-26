@@ -1,0 +1,867 @@
+diff -urN mingwrt-3.18-mingw32.orig/include/io.h mingwrt-3.18-mingw32/include/io.h
+--- mingwrt-3.18-mingw32.orig/include/io.h	2010-03-07 04:28:36.000000000 +0100
++++ mingwrt-3.18-mingw32/include/io.h	2010-11-26 02:13:18.504374500 +0100
+@@ -416,11 +416,13 @@
+ #endif
+ #if __MSVCRT_VERSION__ >= 0x0800
+ #ifndef _USE_32BIT_TIME_T
+-_CRTALIAS long __cdecl __MINGW_NOTHROW	_wfindfirst (const wchar_t* _v1, struct _wfinddata_t* _v2)	 { return(_wfindfirst64i32 (_v1,(struct _wfinddata64i32_t*)_v2)); }
+-_CRTALIAS int  __cdecl __MINGW_NOTHROW	_wfindnext (long _v1, struct _wfinddata_t* _v2)			 { return(_wfindnext64i32  (_v1,(struct _wfinddata64i32_t*)_v2)); }
++#define _wfindfirst _mingw_wfindfirst
++#define _wfindnext _mingw_wfindnext
+ _CRTALIAS long __cdecl __MINGW_NOTHROW	_wfindfirsti64 (const wchar_t* _v1, struct _wfinddatai64_t* _v2) { return(_wfindfirst64 (_v1,(struct __wfinddata64_t*)_v2)); }
+ _CRTALIAS int  __cdecl __MINGW_NOTHROW	_wfindnexti64 (long _v1, struct _wfinddatai64_t* _v2)		 { return(_wfindnext64  (_v1,(struct __wfinddata64_t*)_v2)); }
+ #else
++#define _wfindfirst _mingw_wfindfirst
++#define _wfindnext _mingw_wfindnext
+ _CRTALIAS long __cdecl __MINGW_NOTHROW	_wfindfirst (const wchar_t* _v1, struct _wfinddata_t* _v2)	 { return(_wfindfirst32 (_v1,(struct __wfinddata32_t*)_v2)); }
+ _CRTALIAS int  __cdecl __MINGW_NOTHROW	_wfindnext (long _v1, struct _wfinddata_t* _v2)			 { return(_wfindnext32  (_v1,(struct __wfinddata32_t*)_v2)); }
+ _CRTALIAS long __cdecl __MINGW_NOTHROW	_wfindfirsti64 (const wchar_t* _v1, struct _wfinddatai64_t* _v2) { return(_wfindfirst32i64 (_v1,(struct _wfinddata32i64_t*)_v2)); }
+@@ -484,6 +486,10 @@
+ 
+ #endif	/* Not _NO_OLDNAMES */
+ 
++#if defined _FILE_OFFSET_BITS && _FILE_OFFSET_BITS == 64
++#define lseek _lseeki64
++#endif
++
+ #ifdef	__cplusplus
+ }
+ #endif
+diff -urN mingwrt-3.18-mingw32.orig/include/stdio.h mingwrt-3.18-mingw32/include/stdio.h
+--- mingwrt-3.18-mingw32.orig/include/stdio.h	2010-03-07 04:28:37.000000000 +0100
++++ mingwrt-3.18-mingw32/include/stdio.h	2010-11-26 02:27:27.354374501 +0100
+@@ -576,8 +576,13 @@
+ 
+ /* These differ from the ISO C prototypes, which have a maxlen parameter (like snprintf).  */
+ #ifndef __STRICT_ANSI__
+-_CRTIMP int __cdecl __MINGW_NOTHROW	swprintf (wchar_t*, const wchar_t*, ...);
+-_CRTIMP int __cdecl __MINGW_NOTHROW	vswprintf (wchar_t*, const wchar_t*, __VALIST);
++#if __MSVCRT_VERSION__ < 0x0800
++_CRTIMP int __cdecl __MINGW_NOTHROW swprintf (wchar_t*, const wchar_t*, ...);
++_CRTIMP int __cdecl __MINGW_NOTHROW vswprintf (wchar_t*, const wchar_t*, __VALIST);
++#else 
++_CRTIMP int __cdecl __MINGW_NOTHROW _swprintf (wchar_t*, const wchar_t*, ...);
++_CRTIMP int __cdecl __MINGW_NOTHROW _vswprintf (wchar_t*, const wchar_t*, __VALIST);
++#endif
+ #endif
+ 
+ #ifdef __MSVCRT__ 
+diff -urN mingwrt-3.18-mingw32.orig/include/sys/stat.h mingwrt-3.18-mingw32/include/sys/stat.h
+--- mingwrt-3.18-mingw32.orig/include/sys/stat.h	2010-03-07 04:28:37.000000000 +0100
++++ mingwrt-3.18-mingw32/include/sys/stat.h	2010-11-26 03:21:56.074374500 +0100
+@@ -206,15 +206,6 @@
+ _CRTIMP int __cdecl __MINGW_NOTHROW	_stat (const char*, struct _stat*);
+ #endif
+ 
+-#ifndef	_NO_OLDNAMES
+-/* FIXME for __MSVCRT_VERSION__ >= 0x0800 */
+-/* These functions live in liboldnames.a. */
+-_CRTIMP int __cdecl __MINGW_NOTHROW	fstat (int, struct stat*);
+-_CRTIMP int __cdecl __MINGW_NOTHROW	chmod (const char*, int);
+-_CRTIMP int __cdecl __MINGW_NOTHROW	stat (const char*, struct stat*);
+-
+-#endif	/* Not _NO_OLDNAMES */
+-
+ #if defined (__MSVCRT__)
+ #if __MSVCRT_VERSION__ < 0x0800
+ _CRTIMP int __cdecl __MINGW_NOTHROW  _fstati64(int, struct _stati64 *);
+@@ -245,6 +236,18 @@
+ #endif /* !_USE_32BIT_TIME_T */
+ #endif /* __MSVCRT_VERSION__ >= 0x0800 */
+ 
++#ifndef	_NO_OLDNAMES
++#if __MSVCRT_VERSION__ < 0x0800
++_CRTIMP int __cdecl __MINGW_NOTHROW	fstat (int, struct stat*);
++_CRTIMP int __cdecl __MINGW_NOTHROW	chmod (const char*, int);
++_CRTIMP int __cdecl __MINGW_NOTHROW	stat (const char*, struct stat*);
++#else
++_CRTALIAS int __cdecl __MINGW_NOTHROW	fstat (int _v1, struct stat* _v2)		 { return(_fstat (_v1,(struct _stat*)_v2)); }
++_CRTALIAS int __cdecl __MINGW_NOTHROW	stat (const char* _v1, struct stat* _v2)		 { return(_stat (_v1,(struct _stat*)_v2)); }
++#endif
++#endif	/* Not _NO_OLDNAMES */
++
++
+ 
+ #if !defined ( _WSTAT_DEFINED) /* also declared in wchar.h */
+ #if __MSVCRT_VERSION__ < 0x0800
+@@ -270,6 +273,13 @@
+ #endif /* _WSTAT_DEFIND */
+ #endif /* __MSVCRT__ */
+ 
++#if defined _FILE_OFFSET_BITS && _FILE_OFFSET_BITS == 64
++#undef stat
++#define stat  _stati64
++#define fstat _fstati64
++#define wstat _wstati64
++#endif
++
+ #ifdef	__cplusplus
+ }
+ #endif
+diff -urN mingwrt-3.18-mingw32.orig/include/sys/timeb.h mingwrt-3.18-mingw32/include/sys/timeb.h
+--- mingwrt-3.18-mingw32.orig/include/sys/timeb.h	2010-03-07 04:28:37.000000000 +0100
++++ mingwrt-3.18-mingw32/include/sys/timeb.h	2010-11-26 02:38:20.904374502 +0100
+@@ -59,12 +59,10 @@
+ #endif
+ 
+ /* TODO: Not tested. */
++#if __MSVCRT_VERSION__ < 0x0800
+ _CRTIMP void __cdecl __MINGW_NOTHROW	_ftime (struct _timeb*);
++#endif /* __MSVCRT_VERSION__ */
+ 
+-#ifndef	_NO_OLDNAMES
+-/* FIXME for __MSVCRT_VERSION__ >= 0x0800 */
+-_CRTIMP void __cdecl __MINGW_NOTHROW	ftime (struct timeb*);
+-#endif	/* Not _NO_OLDNAMES */
+ 
+ /* This requires newer versions of msvcrt.dll (6.10 or higher).  */ 
+ #if __MSVCRT_VERSION__ >= 0x0601
+@@ -88,6 +86,15 @@
+ #endif
+ #endif /* __MSVCRT_VERSION__ >= 0x0800 */
+ 
++#ifndef	_NO_OLDNAMES
++#if __MSVCRT_VERSION__ < 0x0800
++_CRTIMP void __cdecl __MINGW_NOTHROW	ftime (struct timeb*);
++#else
++_CRTALIAS void __cdecl __MINGW_NOTHROW	ftime (struct timeb* _v) { return(_ftime((struct _timeb*)_v)); }
++#endif
++#endif	/* Not _NO_OLDNAMES */
++
++
+ #ifdef	__cplusplus
+ }
+ #endif
+diff -urN mingwrt-3.18-mingw32.orig/include/sys/types.h mingwrt-3.18-mingw32/include/sys/types.h
+--- mingwrt-3.18-mingw32.orig/include/sys/types.h	2010-03-07 04:28:37.000000000 +0100
++++ mingwrt-3.18-mingw32/include/sys/types.h	2010-11-26 02:13:18.504374500 +0100
+@@ -49,7 +49,11 @@
+ 
+ #ifndef	_OFF_T_
+ #define	_OFF_T_
++#if defined _FILE_OFFSET_BITS && _FILE_OFFSET_BITS == 64
++typedef long long _off_t;
++#else
+ typedef long _off_t;
++#endif
+ 
+ #ifndef	_NO_OLDNAMES
+ typedef _off_t	off_t;
+diff -urN mingwrt-3.18-mingw32.orig/include/tchar.h mingwrt-3.18-mingw32/include/tchar.h
+--- mingwrt-3.18-mingw32.orig/include/tchar.h	2010-03-07 04:28:37.000000000 +0100
++++ mingwrt-3.18-mingw32/include/tchar.h	2010-11-26 02:28:46.734374501 +0100
+@@ -75,7 +75,13 @@
+  */
+ #define	_tprintf	wprintf
+ #define	_ftprintf	fwprintf
++#if __MSVCRT_VERSION__ < 0x0800
++#define	_vtprintf	vwprintf
+ #define	_stprintf	swprintf
++#else
++#define	_vtprintf	_vwprintf
++#define	_stprintf	_swprintf
++#endif
+ #define	_sntprintf	_snwprintf
+ #define	_vtprintf	vwprintf
+ #define	_vftprintf	vfwprintf
+@@ -188,13 +194,14 @@
+ #define _taccess    _waccess
+ #define _tchmod     _wchmod
+ #define _tcreat     _wcreat
+-#define _tfindfirst _wfindfirst
+-#define _tfindnext  _wfindnext
++#define _tfindfirst32 _wfindfirst32
++#define _tfindnext32  _wfindnext32
+ #if __MSVCRT_VERSION__ >= 0x0800
+ #define _tfindfirst64 _wfindfirst64
+-#define _tfindfirst32 _wfindfirst32
+ #define _tfindnext64  _wfindnext64
+-#define _tfindnext32  _wfindnext32
++#else
++#define _tfindfirst _wfindfirst
++#define _tfindnext  _wfindnext
+ #endif /* __MSVCRT_VERSION__ > 0x0800 */
+ #define _tfdopen    _wfdopen
+ #define _tfopen     _wfopen
+@@ -404,13 +411,14 @@
+ 
+ #define _tchmod     _chmod
+ #define _tcreat     _creat
+-#define _tfindfirst _findfirst
+-#define _tfindnext  _findnext
++#define _tfindnext32  _findnext32
++#define _tfindfirst32 _findfirst32
+ #if __MSVCRT_VERSION__ >= 0x0800
+ #define _tfindfirst64 _findfirst64
+-#define _tfindfirst32 _findfirst32
+ #define _tfindnext64  _findnext64
+-#define _tfindnext32  _findnext32
++#else
++#define _tfindfirst _findfirst
++#define _tfindnext  _findnext
+ #endif /* __MSVCRT_VERSION__ > 0x0800 */
+ #define _tmktemp    _mktemp
+ #define _topen      _open
+diff -urN mingwrt-3.18-mingw32.orig/include/wchar.h mingwrt-3.18-mingw32/include/wchar.h
+--- mingwrt-3.18-mingw32.orig/include/wchar.h	2010-03-07 04:28:37.000000000 +0100
++++ mingwrt-3.18-mingw32/include/wchar.h	2010-11-26 02:27:19.494374502 +0100
+@@ -115,10 +115,16 @@
+ 
+ /* These differ from the ISO C prototypes, which have a maxlen parameter like snprintf.  */
+ #ifndef __STRICT_ANSI__
+-_CRTIMP int __cdecl __MINGW_NOTHROW	swprintf (wchar_t*, const wchar_t*, ...);
+-_CRTIMP int __cdecl __MINGW_NOTHROW	vswprintf (wchar_t*, const wchar_t*, __VALIST);
++#if __MSVCRT_VERSION__ < 0x0800
++_CRTIMP int __cdecl __MINGW_NOTHROW swprintf (wchar_t*, const wchar_t*, ...);
++_CRTIMP int __cdecl __MINGW_NOTHROW vswprintf (wchar_t*, const wchar_t*, __VALIST);
++#else 
++_CRTIMP int __cdecl __MINGW_NOTHROW _swprintf (wchar_t*, const wchar_t*, ...);
++_CRTIMP int __cdecl __MINGW_NOTHROW _vswprintf (wchar_t*, const wchar_t*, __VALIST);
++#endif
+ #endif
+ 
++
+ #ifdef __MSVCRT__
+ _CRTIMP wchar_t* __cdecl __MINGW_NOTHROW fgetws (wchar_t*, int, FILE*);
+ _CRTIMP int __cdecl __MINGW_NOTHROW	fputws (const wchar_t*, FILE*);
+@@ -367,6 +373,10 @@
+ };
+ #endif
+ #if __MSVCRT_VERSION__ >= 0x0800
++
++#ifndef FILENAME_MAX
++#define FILENAME_MAX    (260)
++#endif
+ struct __wfinddata32_t {
+ 	unsigned	attrib;
+ 	__time32_t	time_create;
+diff -urN mingwrt-3.18-mingw32.orig/Makefile.in mingwrt-3.18-mingw32/Makefile.in
+--- mingwrt-3.18-mingw32.orig/Makefile.in	2010-02-15 04:16:19.000000000 +0100
++++ mingwrt-3.18-mingw32/Makefile.in	2010-11-26 02:13:18.514374500 +0100
+@@ -232,7 +232,7 @@
+ 	     tlsmcrt.o tlsmthread.o tlssup.o tlsthrd.o
+ 
+ MOLD_OBJS = isascii.o iscsym.o iscsymf.o toascii.o \
+-	strcasecmp.o strncasecmp.o wcscmpi.o
++	strcasecmp.o strncasecmp.o wcscmpi.o oldtimes.o
+ 
+ LIBS = libcrtdll.a \
+        libmsvcrt.a  libmsvcrtd.a \
+@@ -240,6 +240,7 @@
+        libmsvcr71.a libmsvcr71d.a \
+        libmsvcr80.a libmsvcr80d.a \
+        libmsvcr90.a libmsvcr90d.a \
++       libmozcrt19.a \
+        libmingw32.a \
+        libcoldname.a \
+        libmoldname.a   libmoldnamed.a \
+@@ -247,6 +248,7 @@
+        libmoldname71.a libmoldname71d.a \
+        libmoldname80.a libmoldname80d.a \
+        libmoldname90.a libmoldname90d.a \
++       libmoldname19.a \
+        $(LIBM_A) \
+        libmingwthrd_old.a \
+        libmingwthrd.a
+@@ -330,6 +332,14 @@
+ 		-D__MSVCRT__ -C -E -P \
+ 		-xc-header $? > $@
+ 
++mozcrt19.def: msvcrt.def.in
++	V="0x0800"; \
++	$(CC) -DRUNTIME=$(basename $(notdir $@)) \
++		-D__MSVCRT_VERSION__=$$V \
++		-D__msvcr80__=1 \
++		-D__MSVCRT__ -C -E -P \
++		-xc-header $? > $@
++
+ moldname-crtdll.def: moldname.def.in
+ 	$(CC) -DRUNTIME=crtdll \
+ 		-D__FILENAME__=moldname-crtdll.def \
+@@ -342,6 +352,13 @@
+ 		-D__MSVCRT__  -C -E -P \
+ 		-xc-header $? > $@
+ 
++moldname-msvcr80.def: moldname.def.in
++	$(CC) -DRUNTIME=msvcrt \
++		-D__MSVCRT_VERSION__=0x0800 \
++		-D__FILENAME__=moldname-msvcr80.def \
++		-D__MSVCRT__  -C -E -P \
++		-xc-header $? > $@
++
+ libcoldname.a: moldname-crtdll.def $(MOLD_OBJS)
+ 	$(DLLTOOL) --as $(AS) -k -U	\
+ 		--dllname crtdll.dll	\
+@@ -368,6 +385,23 @@
+ 		--output-lib $@
+ 	$(AR) rc $@ $(MOLD_OBJS)
+ 	$(RANLIB) $@
++
++libmoldname80.a libmoldname80d.a \
++libmoldname90.a libmoldname90d.a: moldname-msvcr80.def $(MOLD_OBJS)
++	$(DLLTOOL) --as $(AS) -k -U	\
++		--dllname msvcr$(@:libmoldname%a=%)dll  \
++		--def moldname-msvcr80.def	\
++		--output-lib $@
++	$(AR) rc $@ $(MOLD_OBJS)
++	$(RANLIB) $@
++
++libmoldname19.a: moldname-msvcr80.def $(MOLD_OBJS)
++	$(DLLTOOL) --as $(AS) -k -U	\
++		--dllname mozcrt$(@:libmoldname%a=%)dll  \
++		--def moldname-msvcr80.def	\
++		--output-lib $@
++	$(AR) rc $@ $(MOLD_OBJS)
++	$(RANLIB) $@
+ 
+ # These special rules are necessary...
+ #
+diff -urN mingwrt-3.18-mingw32.orig/mingwex/dirent80.c mingwrt-3.18-mingw32/mingwex/dirent80.c
+--- mingwrt-3.18-mingw32.orig/mingwex/dirent80.c	1970-01-01 01:00:00.000000000 +0100
++++ mingwrt-3.18-mingw32/mingwex/dirent80.c	2010-11-26 02:13:18.514374500 +0100
+@@ -0,0 +1,322 @@
++/*
++ * dirent80.c
++ * This file has no copyright assigned and is placed in the Public Domain.
++ * This file is a part of the mingw-runtime package.
++ * No warranty is given; refer to the file DISCLAIMER within the package.
++ *
++ * Derived from DIRLIB.C by Matt J. Weinstein 
++ * This note appears in the DIRLIB.H
++ * DIRLIB.H by M. J. Weinstein   Released to public domain 1-Jan-89
++ *
++ * Updated by Jeremy Bettis <jeremy@hksys.com>
++ * Significantly revised and rewinddir, seekdir and telldir added by Colin
++ * Peters <colin@fu.is.saga-u.ac.jp>
++ * Adopted for msvcr80+ by Nils Maier <maierman@web.de>
++ */
++
++#include <stdlib.h>
++#include <errno.h>
++#include <string.h>
++#include <io.h>
++#include <direct.h>
++#include <dirent.h>
++
++#define WIN32_LEAN_AND_MEAN
++#include <windows.h> /* for GetFileAttributes */
++
++#include <tchar.h>
++#define SUFFIX	_T("*")
++#define	SLASH	_T("\\")
++
++/*
++ * opendir
++ *
++ * Returns a pointer to a DIR structure appropriately filled in to begin
++ * searching a directory.
++ */
++_TDIR * 
++_topendir (const _TCHAR *szPath)
++{
++  _TDIR *nd;
++  unsigned int rc;
++  _TCHAR szFullPath[MAX_PATH];
++	
++  errno = 0;
++
++  if (!szPath)
++    {
++      errno = EFAULT;
++      return (_TDIR *) 0;
++    }
++
++  if (szPath[0] == _T('\0'))
++    {
++      errno = ENOTDIR;
++      return (_TDIR *) 0;
++    }
++
++  /* Attempt to determine if the given path really is a directory. */
++  rc = GetFileAttributes (szPath);
++  if (rc == (unsigned int)-1)
++    {
++      /* call GetLastError for more error info */
++      errno = ENOENT;
++      return (_TDIR *) 0;
++    }
++  if (!(rc & FILE_ATTRIBUTE_DIRECTORY))
++    {
++      /* Error, entry exists but not a directory. */
++      errno = ENOTDIR;
++      return (_TDIR *) 0;
++    }
++
++  /* Make an absolute pathname.  */
++  _tfullpath (szFullPath, szPath, MAX_PATH);
++
++  /* Allocate enough space to store DIR structure and the complete
++   * directory path given. */
++  nd = (_TDIR *) malloc (sizeof (_TDIR) + (_tcslen (szFullPath)
++					   + _tcslen (SLASH)
++					   + _tcslen (SUFFIX) + 1)
++					  * sizeof (_TCHAR));
++
++  if (!nd)
++    {
++      /* Error, out of memory. */
++      errno = ENOMEM;
++      return (_TDIR *) 0;
++    }
++
++  /* Create the search expression. */
++  _tcscpy (nd->dd_name, szFullPath);
++
++  /* Add on a slash if the path does not end with one. */
++  if (nd->dd_name[0] != _T('\0')
++      && _tcsrchr (nd->dd_name, _T('/')) != nd->dd_name
++					    + _tcslen (nd->dd_name) - 1
++      && _tcsrchr (nd->dd_name, _T('\\')) != nd->dd_name
++      					     + _tcslen (nd->dd_name) - 1)
++    {
++      _tcscat (nd->dd_name, SLASH);
++    }
++
++  /* Add on the search pattern */
++  _tcscat (nd->dd_name, SUFFIX);
++
++  /* Initialize handle to -1 so that a premature closedir doesn't try
++   * to call _findclose on it. */
++  nd->dd_handle = -1;
++
++  /* Initialize the status. */
++  nd->dd_stat = 0;
++
++  /* Initialize the dirent structure. ino and reclen are invalid under
++   * Win32, and name simply points at the appropriate part of the
++   * findfirst_t structure. */
++  nd->dd_dir.d_ino = 0;
++  nd->dd_dir.d_reclen = 0;
++  nd->dd_dir.d_namlen = 0;
++  memset (nd->dd_dir.d_name, 0, FILENAME_MAX);
++
++  return nd;
++}
++
++
++/*
++ * readdir
++ *
++ * Return a pointer to a dirent structure filled with the information on the
++ * next entry in the directory.
++ */
++struct _tdirent *
++_treaddir (_TDIR * dirp)
++{
++  errno = 0;
++
++  /* Check for valid DIR struct. */
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return (struct _tdirent *) 0;
++    }
++
++  if (dirp->dd_stat < 0)
++    {
++      /* We have already returned all files in the directory
++       * (or the structure has an invalid dd_stat). */
++      return (struct _tdirent *) 0;
++    }
++  else if (dirp->dd_stat == 0)
++    {
++      /* We haven't started the search yet. */
++      /* Start the search */
++      dirp->dd_handle = _tfindfirst32 (dirp->dd_name, &(dirp->dd_dta));
++
++      if (dirp->dd_handle == -1)
++	{
++	  /* Whoops! Seems there are no files in that
++	   * directory. */
++	  dirp->dd_stat = -1;
++	}
++      else
++	{
++	  dirp->dd_stat = 1;
++	}
++    }
++  else
++    {
++      /* Get the next search entry. */
++      if (_tfindnext32 (dirp->dd_handle, &(dirp->dd_dta)))
++	{
++	  /* We are off the end or otherwise error.	
++	     _findnext sets errno to ENOENT if no more file
++	     Undo this. */ 
++	  DWORD winerr = GetLastError ();
++	  if (winerr == ERROR_NO_MORE_FILES)
++	    errno = 0;	
++	  _findclose (dirp->dd_handle);
++	  dirp->dd_handle = -1;
++	  dirp->dd_stat = -1;
++	}
++      else
++	{
++	  /* Update the status to indicate the correct
++	   * number. */
++	  dirp->dd_stat++;
++	}
++    }
++
++  if (dirp->dd_stat > 0)
++    {
++      /* Successfully got an entry. Everything about the file is
++       * already appropriately filled in except the length of the
++       * file name. */
++      dirp->dd_dir.d_namlen = _tcslen (dirp->dd_dta.name);
++      _tcscpy (dirp->dd_dir.d_name, dirp->dd_dta.name);
++      return &dirp->dd_dir;
++    }
++
++  return (struct _tdirent *) 0;
++}
++
++
++/*
++ * closedir
++ *
++ * Frees up resources allocated by opendir.
++ */
++int
++_tclosedir (_TDIR * dirp)
++{
++  int rc;
++
++  errno = 0;
++  rc = 0;
++
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return -1;
++    }
++
++  if (dirp->dd_handle != -1)
++    {
++      rc = _findclose (dirp->dd_handle);
++    }
++
++  /* Delete the dir structure. */
++  free (dirp);
++
++  return rc;
++}
++
++/*
++ * rewinddir
++ *
++ * Return to the beginning of the directory "stream". We simply call findclose
++ * and then reset things like an opendir.
++ */
++void
++_trewinddir (_TDIR * dirp)
++{
++  errno = 0;
++
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return;
++    }
++
++  if (dirp->dd_handle != -1)
++    {
++      _findclose (dirp->dd_handle);
++    }
++
++  dirp->dd_handle = -1;
++  dirp->dd_stat = 0;
++}
++
++/*
++ * telldir
++ *
++ * Returns the "position" in the "directory stream" which can be used with
++ * seekdir to go back to an old entry. We simply return the value in stat.
++ */
++long
++_ttelldir (_TDIR * dirp)
++{
++  errno = 0;
++
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return -1;
++    }
++  return dirp->dd_stat;
++}
++
++/*
++ * seekdir
++ *
++ * Seek to an entry previously returned by telldir. We rewind the directory
++ * and call readdir repeatedly until either dd_stat is the position number
++ * or -1 (off the end). This is not perfect, in that the directory may
++ * have changed while we weren't looking. But that is probably the case with
++ * any such system.
++ */
++void
++_tseekdir (_TDIR * dirp, long lPos)
++{
++  errno = 0;
++
++  if (!dirp)
++    {
++      errno = EFAULT;
++      return;
++    }
++
++  if (lPos < -1)
++    {
++      /* Seeking to an invalid position. */
++      errno = EINVAL;
++      return;
++    }
++  else if (lPos == -1)
++    {
++      /* Seek past end. */
++      if (dirp->dd_handle != -1)
++	{
++	  _findclose (dirp->dd_handle);
++	}
++      dirp->dd_handle = -1;
++      dirp->dd_stat = -1;
++    }
++  else
++    {
++      /* Rewind and read forward to the appropriate index. */
++      _trewinddir (dirp);
++
++      while ((dirp->dd_stat < lPos) && _treaddir (dirp))
++	;
++    }
++}
+diff -urN mingwrt-3.18-mingw32.orig/mingwex/Makefile.in mingwrt-3.18-mingw32/mingwex/Makefile.in
+--- mingwrt-3.18-mingw32.orig/mingwex/Makefile.in	2009-10-29 23:45:14.000000000 +0100
++++ mingwrt-3.18-mingw32/mingwex/Makefile.in	2010-11-26 02:13:18.514374500 +0100
+@@ -144,6 +144,7 @@
+ DLLTOOL_FLAGS = --as $(AS_FOR_TARGET)
+ 
+ LIBMINGWEX_A = libmingwex.a
++LIBMINGWEX80_A = libmingwex80.a
+ 
+ Q8_OBJS = \
+ 	fwide.o imaxabs.o imaxdiv.o mbsinit.o \
+@@ -200,6 +201,9 @@
+ POSIX_OBJS = \
+ 	dirent.o wdirent.o getopt.o ftruncate.o gettimeofday.o usleep.o \
+ 	basename.o dirname.o tsearch.o twalk.o tdelete.o tfind.o
++POSIX80_OBJS = \
++	dirent80.o wdirent80.o getopt.o ftruncate.o gettimeofday.o usleep.o \
++	basename.o dirname.o tsearch.o twalk.o tdelete.o tfind.o
+ REPLACE_OBJS = \
+ 	mingw-aligned-malloc.o mingw-fseek.o
+ COMPLEX_OBJS = \
+@@ -220,17 +224,23 @@
+ LIB_OBJS = $(Q8_OBJS)  $(CTYPE_OBJS) $(STDLIB_STUB_OBJS) \
+ 	$(STDIO_OBJS) $(MATH_OBJS) $(MATH_ROUND_OBJS) \
+ 	$(MATH_LROUND_OBJS) $(MATH_LLROUND_OBJS) $(FENV_OBJS) \
+-	$(POSIX_OBJS) $(REPLACE_OBJS) $(COMPLEX_OBJS) \
++	$(REPLACE_OBJS) $(COMPLEX_OBJS) \
+ 	$(GDTOA_OBJS)
+ 
+ LIBS = $(LIBMINGWEX_A)
++LIBS += $(LIBMINGWEX80_A)
+ DLLS = 
+ 
+-all: $(LIBMINGWEX_A)
++all: $(LIBS)
++
++$(LIBMINGWEX_A): $(LIB_OBJS) $(POSIX_OBJS)
++	rm -f $(LIBMINGWEX_A)
++	$(AR) $(ARFLAGS) $@ $(LIB_OBJS) $(POSIX_OBJS)
++	$(RANLIB) $@
+ 
+-$(LIBMINGWEX_A): $(LIB_OBJS)
++$(LIBMINGWEX80_A): $(LIB_OBJS) $(POSIX80_OBJS)
+ 	rm -f $(LIBMINGWEX_A)
+-	$(AR) $(ARFLAGS) $@ $(LIB_OBJS)
++	$(AR) $(ARFLAGS) $@ $(LIB_OBJS) $(POSIX80_OBJS)
+ 	$(RANLIB) $@
+ 
+ $(MATH_ROUND_OBJS): round_generic.c
+@@ -274,7 +284,7 @@
+ 	done
+ 
+ clean:
+-	-rm -f $(LIB_OBJS)  $(LIBMINGWEX_A)
++	-rm -f $(LIB_OBJS) $(POSIX_OBJS) $(POSIX80_OBJS) $(LIBS)
+ 
+ distclean:
+ 	-rm -f *.o *.a *~ core a.out
+diff -urN mingwrt-3.18-mingw32.orig/mingwex/wdirent80.c mingwrt-3.18-mingw32/mingwex/wdirent80.c
+--- mingwrt-3.18-mingw32.orig/mingwex/wdirent80.c	1970-01-01 01:00:00.000000000 +0100
++++ mingwrt-3.18-mingw32/mingwex/wdirent80.c	2010-11-26 02:13:18.514374500 +0100
+@@ -0,0 +1,5 @@
++#define _UNICODE 1
++#define UNICODE 1
++
++#include <wchar.h>
++#include "dirent80.c"
+diff -urN mingwrt-3.18-mingw32.orig/moldname.def.in mingwrt-3.18-mingw32/moldname.def.in
+--- mingwrt-3.18-mingw32.orig/moldname.def.in	2008-12-20 04:53:55.000000000 +0100
++++ mingwrt-3.18-mingw32/moldname.def.in	2010-11-26 02:13:18.514374500 +0100
+@@ -56,8 +56,10 @@
+ ; fpreset
+ fputchar
+ fputwchar
++#if __MSVCRT_VERSION__ < 0x0800
+ fstat
+ ftime
++#endif
+ gcvt
+ getch
+ getche
+diff -urN mingwrt-3.18-mingw32.orig/msvcrt.def.in mingwrt-3.18-mingw32/msvcrt.def.in
+--- mingwrt-3.18-mingw32.orig/msvcrt.def.in	2010-02-15 04:18:05.000000000 +0100
++++ mingwrt-3.18-mingw32/msvcrt.def.in	2010-11-26 02:13:18.514374500 +0100
+@@ -186,10 +186,6 @@
+ _fileno
+ _findclose
+ #if __MSVCRT_VERSION__ < 0x0800
+-_findfirst
+-_findfirsti64
+-_findnext
+-_findnexti64
+ #endif
+ _finite
+ _flsbuf
+@@ -483,12 +479,6 @@
+ _wexecvp
+ _wexecvpe
+ _wfdopen
+-#if __MSVCRT_VERSION__ < 0x0800
+-_wfindfirst
+-_wfindfirsti64
+-_wfindnext
+-_wfindnexti64
+-#endif
+ _wfopen
+ _wfreopen
+ _wfsopen
+@@ -604,6 +594,9 @@
+ getwchar
+ #if __MSVCRT_VERSION__ < 0x0800
+ gmtime
++#else
++gmtime32
++gmtime64
+ #endif
+ is_wctype
+ isalnum
+@@ -637,6 +630,9 @@
+ localeconv
+ #if __MSVCRT_VERSION__ < 0x0800
+ localtime
++#else
++_localtime32
++_localtime64
+ #endif
+ log
+ log10
+@@ -652,6 +648,9 @@
+ memset
+ #if __MSVCRT_VERSION__ < 0x0800
+ mktime
++#else
++_mktime32
++_mktime64
+ #endif
+ modf
+ perror
+@@ -701,7 +700,12 @@
+ strtol
+ strtoul
+ strxfrm
++#if __MSVCRT_VERSION__ < 0x0800
+ swprintf
++#else
++_swprintf
++swprintf=_swprintf
++#endif
+ swscanf
+ system
+ tan
+@@ -721,7 +725,12 @@
+ vfwprintf
+ vprintf
+ vsprintf
++#if __MSVCRT_VERSION__ < 0x0800
+ vswprintf
++#else
++_vswprintf
++vswprintf=_vswprintf
++#endif
+ vwprintf
+ wcscat
+ wcschr
+@@ -758,12 +767,15 @@
+ _fstat64
+ _ftime64
+ _futime64
++_gmtime32
+ _gmtime64
+-_localtime64
++_localtime32
+ _mbcasemap
++_mktime32
+ _mktime64
+ _osplatform	DATA
+ _stat64
++_time32
+ _time64
+ _utime64
+ _wctime64
+@@ -888,4 +900,13 @@
+ _wstat32i64
+ _wstat64i32
+ _wutime32
++#else
++_findfirst
++_findfirsti64
++_findnext
++_findnexti64
++_wfindfirst
++_wfindfirsti64
++_wfindnext
++_wfindnexti64
+ #endif
+diff -urN mingwrt-3.18-mingw32.orig/oldtimes.c mingwrt-3.18-mingw32/oldtimes.c
+--- mingwrt-3.18-mingw32.orig/oldtimes.c	1970-01-01 01:00:00.000000000 +0100
++++ mingwrt-3.18-mingw32/oldtimes.c	2010-11-26 02:13:18.514374500 +0100
+@@ -0,0 +1,11 @@
++#if __MSVCRT_VERSION__ >= 0x0800
++#include <time.h>
++#include <sys/stat.h>
++
++time_t       __cdecl __MINGW_NOTHROW  time (time_t* _v)         { return(_time32 (_v)); }
++time_t       __cdecl __MINGW_NOTHROW  mktime (struct tm* _v)        { return(_mktime32 (_v)); }
++struct tm*       __cdecl __MINGW_NOTHROW  gmtime (const time_t* _v)     { return(_gmtime32 (_v)); }
++struct tm*       __cdecl __MINGW_NOTHROW  localtime (const time_t* _v)      { return(_localtime32 (_v)); }
++int __cdecl __MINGW_NOTHROW   _fstati64 (int _v1, struct _stati64* _v2)    { return(_fstat64 (_v1,(struct __stat64*)_v2)); }
++int __cdecl __MINGW_NOTHROW   _stati64 (const char* _v1, struct _stati64* _v2) { return(_stat64  (_v1,(struct __stat64*)_v2)); }
++#endif
+diff -urN mingwrt-3.18-mingw32.orig/tlssup.c mingwrt-3.18-mingw32/tlssup.c
+--- mingwrt-3.18-mingw32.orig/tlssup.c	2009-12-06 20:44:45.000000000 +0100
++++ mingwrt-3.18-mingw32/tlssup.c	2010-11-26 02:13:18.514374500 +0100
+@@ -96,7 +96,7 @@
+   _PVFV *pfunc;
+ 
+ #ifndef _WIN64
+-  if (_winmajor < 4)
++  if ((DWORD)(LOBYTE(LOWORD(GetVersion()))) < 4)
+   {
+     __mingw_usemthread_dll = 1;
+     __mingw_mthread_hdll = LoadLibrary (MINGWM10_DLL);
