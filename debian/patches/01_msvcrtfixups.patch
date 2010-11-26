@@ -1,6 +1,6 @@
 diff -urN mingwrt-3.18-mingw32.orig/include/io.h mingwrt-3.18-mingw32/include/io.h
 --- mingwrt-3.18-mingw32.orig/include/io.h	2010-03-07 04:28:36.000000000 +0100
-+++ mingwrt-3.18-mingw32/include/io.h	2010-11-26 02:13:18.504374500 +0100
++++ mingwrt-3.18-mingw32/include/io.h	2010-11-26 12:11:09.141718981 +0100
 @@ -416,11 +416,13 @@
  #endif
  #if __MSVCRT_VERSION__ >= 0x0800
@@ -203,6 +203,55 @@ diff -urN mingwrt-3.18-mingw32.orig/include/tchar.h mingwrt-3.18-mingw32/include
  #endif /* __MSVCRT_VERSION__ > 0x0800 */
  #define _tmktemp    _mktemp
  #define _topen      _open
+diff -urN mingwrt-3.18-mingw32.orig/include/time.h mingwrt-3.18-mingw32/include/time.h
+--- mingwrt-3.18-mingw32.orig/include/time.h	2010-03-07 04:28:37.000000000 +0100
++++ mingwrt-3.18-mingw32/include/time.h	2010-11-26 18:21:16.374083980 +0100
+@@ -41,16 +41,13 @@
+ #define _TIME32_T_DEFINED
+ #endif
+ 
+-#ifndef __STRICT_ANSI__
+ /* A 64-bit time_t to get to Y3K */
+ #ifndef _TIME64_T_DEFINED
+ typedef __int64 __time64_t;
+ #define _TIME64_T_DEFINED
+ #endif
+-#endif
+ 
+ #ifndef _TIME_T_DEFINED
+-/* FIXME __STRICT_ANSI__ ! */
+ #if __MSVCRT_VERSION__ >= 0x0800
+ #ifndef _USE_32BIT_TIME_T
+ typedef	__time64_t time_t;
+@@ -123,8 +120,6 @@
+ 
+ _CRTIMP size_t __cdecl __MINGW_NOTHROW		strftime (char*, size_t, const char*, const struct tm*);
+ 
+-#ifndef __STRICT_ANSI__
+-
+ extern _CRTIMP void __cdecl __MINGW_NOTHROW	_tzset (void);
+ 
+ #ifndef _NO_OLDNAMES
+@@ -240,11 +235,9 @@
+ #endif /* not __MSVCRT__ */
+ 
+ #endif	/* Not _NO_OLDNAMES */
+-#endif	/* Not __STRICT_ANSI__ */
+ 
+ #ifndef _WTIME_DEFINED
+ /* wide function prototypes, also declared in wchar.h */
+-#ifndef __STRICT_ANSI__
+ #ifdef __MSVCRT__
+ _CRTIMP wchar_t* __cdecl __MINGW_NOTHROW	_wasctime(const struct tm*);
+ #if __MSVCRT_VERSION__ < 0x0800
+@@ -264,7 +257,6 @@
+ #endif
+ #endif /* __MSVCRT_VERSION__ >= 0x0800 */
+ #endif /*  __MSVCRT__ */
+-#endif /* __STRICT_ANSI__ */
+ _CRTIMP size_t __cdecl __MINGW_NOTHROW		wcsftime (wchar_t*, size_t, const wchar_t*, const struct tm*);
+ #define _WTIME_DEFINED
+ #endif /* _WTIME_DEFINED */ 
 diff -urN mingwrt-3.18-mingw32.orig/include/wchar.h mingwrt-3.18-mingw32/include/wchar.h
 --- mingwrt-3.18-mingw32.orig/include/wchar.h	2010-03-07 04:28:37.000000000 +0100
 +++ mingwrt-3.18-mingw32/include/wchar.h	2010-11-26 02:27:19.494374502 +0100

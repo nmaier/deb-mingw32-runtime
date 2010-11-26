@@ -1,3 +1,9 @@
+mingw32-runtime (3.18-nm2ubuntu1) maverick; urgency=low
+
+  * Remove STRICT_ANSI from time.c (parity:nix)
+
+ -- Nils Maier <maierman@web.de>  Fri, 26 Nov 2010 18:22:21 +0100
+
 mingw32-runtime (3.18-nm2) lucid; urgency=low
 
   * Generate mingwex80 for msvcrt >= 0x0800 targets
